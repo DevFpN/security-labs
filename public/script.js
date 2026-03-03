@@ -1,7 +1,3 @@
-const form = document.getElementById('loginForm');
-const passwordInput = document.getElementById('password');
-const strengthMessage = document.getElementById('strengthMessage');
-
 function checkPasswordStrength(password) {
   const minLength = /.{8,}/;
   const hasNumber = /[0-9]/;
@@ -14,27 +10,65 @@ function checkPasswordStrength(password) {
   return 'Forte';
 }
 
+const passwordInput = document.getElementById('password');
+const strengthMessage = document.getElementById('strengthMessage');
+
 passwordInput.addEventListener('input', () => {
   strengthMessage.textContent = checkPasswordStrength(passwordInput.value);
 });
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+// ================= LOGIN =================
 
-  if (checkPasswordStrength(passwordInput.value) !== 'Forte') {
-    alert('Password fraca. Corrija antes de enviar.');
-    return;
-  }
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const response = await fetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: document.getElementById('username').value,
-      password: passwordInput.value
-    })
+    if (checkPasswordStrength(passwordInput.value) !== 'Forte') {
+      alert('Password fraca. Corrija antes de enviar.');
+      return;
+    }
+
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: passwordInput.value
+      })
+    });
+
+    const data = await response.json();
+    alert(data.message || data.error);
   });
+}
 
-  const data = await response.json();
-  alert(data.message || data.error);
-});
+// ================= REGISTO =================
+
+const registerForm = document.getElementById('registerForm');
+if (registerForm) {
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (checkPasswordStrength(passwordInput.value) !== 'Forte') {
+      alert('Password fraca. Corrija antes de enviar.');
+      return;
+    }
+
+    const response = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: passwordInput.value
+      })
+    });
+
+    const data = await response.json();
+    alert(data.message || data.error);
+
+    if (response.ok) {
+      window.location.href = 'login.html';
+    }
+  });
+}

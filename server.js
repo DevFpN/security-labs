@@ -32,6 +32,13 @@ app.post('/register', async (req, res) => {
     });
   }
 
+  // Validação de força da password (server-side)
+  if (!isPasswordStrong(password)) {
+    return res.status(400).json({
+      error: "Password fraca: mínimo 8 caracteres, um número e um símbolo (!@#$%^&*)"
+    });
+  }
+
   try {
     // Gerar hash com bcrypt
     const hash = await bcrypt.hash(password, saltRounds);
@@ -109,6 +116,14 @@ app.post('/login', async (req, res) => {
 
 
 // ================= FUNÇÕES AUXILIARES =================
+
+
+function isPasswordStrong(password) {
+  const minLength = /.{8,}/;
+  const hasNumber = /[0-9]/;
+  const hasSpecial = /[!@#$%^&*]/;
+  return minLength.test(password) && hasNumber.test(password) && hasSpecial.test(password);
+}
 
 function registerFailedAttempt(ip, res) {
 
