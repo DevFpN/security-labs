@@ -1,0 +1,13 @@
+# Pastas Node.js
+node_modules/
+
+# Base de dados local
+users
+DB
+
+# Arquivos de ambiente e logs
+.env
+*.log
+
+# Sistema / editor
+.DS_Store
