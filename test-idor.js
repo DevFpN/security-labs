@@ -8,20 +8,22 @@
 
 const BASE = 'http://localhost:3000';
 
-async function post(path, body, sessionId) {
+async function post(path, body, token) {
   const headers = { 'Content-Type': 'application/json' };
-  if (sessionId) headers['x-session-id'] = sessionId;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers,
+    credentials: 'include',
     body: JSON.stringify(body)
   });
   return { status: res.status, data: await res.json() };
 }
 
-async function get(path, sessionId) {
+async function get(path, token) {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'x-session-id': sessionId }
+    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include'
   });
   return { status: res.status, data: await res.json() };
 }
@@ -34,26 +36,26 @@ async function run() {
   await post('/register', { username: 'bob',   password: 'Bobby123!' });
   console.log('✔ Alice e Bob registados\n');
 
-  // 2. Login
+  // 2. Login — guarda o accessToken JWT
   const loginA = await post('/login', { username: 'alice', password: 'Alice123!' });
   const loginB = await post('/login', { username: 'bob',   password: 'Bobby123!' });
-  const sessionA = loginA.data.sessionId;
-  const sessionB = loginB.data.sessionId;
-  console.log('✔ Alice sessionId:', sessionA);
-  console.log('✔ Bob   sessionId:', sessionB, '\n');
+  const tokenA = loginA.data.accessToken;
+  const tokenB = loginB.data.accessToken;
+  console.log('✔ Alice accessToken:', tokenA ? tokenA.slice(0, 20) + '...' : 'ERRO');
+  console.log('✔ Bob   accessToken:', tokenB ? tokenB.slice(0, 20) + '...' : 'ERRO', '\n');
 
   // 3. Cada um cria um segredo
-  const secretA = await post('/secrets', { content: 'Segredo da Alice' }, sessionA);
-  const secretB = await post('/secrets', { content: 'Segredo do Bob'   }, sessionB);
+  const secretA = await post('/secrets', { content: 'Segredo da Alice' }, tokenA);
+  const secretB = await post('/secrets', { content: 'Segredo do Bob'   }, tokenB);
   console.log('✔ Alice criou segredo ID:', secretA.data.id);
   console.log('✔ Bob   criou segredo ID:', secretB.data.id, '\n');
 
   // 4. Alice acede ao seu próprio segredo → deve funcionar (200)
-  const ownAccess = await get(`/secrets/${secretA.data.id}`, sessionA);
+  const ownAccess = await get(`/secrets/${secretA.data.id}`, tokenA);
   console.log(`Alice acede ao seu segredo → ${ownAccess.status}`, ownAccess.data);
 
   // 5. Alice tenta aceder ao segredo do Bob → deve receber 404
-  const idorAttempt = await get(`/secrets/${secretB.data.id}`, sessionA);
+  const idorAttempt = await get(`/secrets/${secretB.data.id}`, tokenA);
   console.log(`Alice tenta aceder ao segredo do Bob → ${idorAttempt.status}`, idorAttempt.data);
 
   if (idorAttempt.status === 404) {
