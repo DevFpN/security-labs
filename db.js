@@ -9,13 +9,23 @@ const db = new sqlite3.Database('./users', (err) => {
   }
 });
 
-// Criação da tabela users
+// Criação das tabelas
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
-      password TEXT
+      password TEXT,
+      role TEXT NOT NULL DEFAULT 'user'
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS secrets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      FOREIGN KEY (owner_id) REFERENCES users(id)
     )
   `);
 });
