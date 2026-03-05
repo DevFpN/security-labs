@@ -7,6 +7,7 @@ const helmet     = require('helmet');
 const cors       = require('cors');
 const crypto     = require('crypto');
 const path       = require('path');
+const cookieParser = require('cookie-parser');
 const db         = require('./db');
 
 const app = express();
@@ -14,6 +15,7 @@ const app = express();
 // ================= CONFIGURAÇÃO =================
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const saltRounds = 12;
@@ -252,7 +254,7 @@ app.post('/login', async (req, res) => {
 // ---------- REFRESH TOKEN (ex 4.1) ----------
 // Emite novo access token usando o refresh token do cookie HttpOnly
 app.post('/refresh', (req, res) => {
-  const refreshToken = req.cookies?.refreshToken;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!refreshToken) {
     return res.status(401).json({ error: 'Refresh token em falta' });
@@ -331,7 +333,6 @@ app.get('/secrets/search', requireAuth, (req, res) => {
 
   const search = req.query.q || '';
 
-  // Query parametrizada — filtra apenas pelos segredos do utilizador autenticado
   db.all(
     'SELECT id, content FROM secrets WHERE owner_id = ?',
     [req.user.userId],
