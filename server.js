@@ -16,19 +16,16 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 const saltRounds = 12;
 
 // ================= EX 4.2 — CORS =================
-// Só aceita pedidos da origem definida em .env
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN,
   credentials: true
 }));
 
 // ================= EX 4.2 — SECURITY HEADERS (helmet) =================
-// Content-Security-Policy, X-Frame-Options, Strict-Transport-Security, etc.
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -41,6 +38,8 @@ app.use(helmet({
   frameguard:       { action: 'deny' },
   hsts:             { maxAge: 31536000, includeSubDomains: true }
 }));
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ================= EX 3.2 — CIFRA EM REPOUSO =================
 // Usa AES-256-GCM. A chave vem do .env e nunca está no código.
@@ -82,6 +81,7 @@ function safeLog(message) {
 // Imutável: só INSERT, nunca UPDATE nem DELETE
 function auditLog(userId, action, result, ip) {
   const timestamp = new Date().toISOString();
+  safeLog(`auditLog — user_id: ${userId}, action: ${action}, result: ${result}, ip: ${ip}`);
   db.run(
     'INSERT INTO audit_log (user_id, action, timestamp, result, ip) VALUES (?, ?, ?, ?, ?)',
     [userId || null, action, timestamp, result, ip || null]
